@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "deal": "tsx src/cli/deal.ts",
     "score": "tsx src/cli/score.ts",
-    "gen:baselines": "tsx scripts/generate-baselines.ts"
+    "gen:baselines": "tsx scripts/generate-baselines.ts",
+    "worksheet": "tsx scripts/worksheet.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
