@@ -1,0 +1,20 @@
+/*
+ * Deer-camp palette (REQUIREMENTS §5.1). The ONLY place hex colors live for
+ * this theme. Everything else references these CSS variables, so a different
+ * theme is a different file — no hex anywhere outside src/themes.
+ */
+:root {
+  --bg: #161a13; /* forest-dark background */
+  --panel: #22281d;
+  --divider: #2c3326;
+  --text: #eee8d8;
+  --text-secondary: #aaa691;
+  --accent: #ff6b1a; /* blaze orange */
+  --accent-text: #ff7a2e; /* orange text on dark */
+  --bone: #efe3c6; /* antler/bone */
+  --card-face: #ece4d2; /* off-white, never pure white (§1A) */
+  --board-wood: #4b3a27;
+  --peg-a: #ff6b1a; /* blaze orange */
+  --peg-b: #efe3c6; /* antler bone */
+  --peg-c: #7faf4a; /* mid green: differs in lightness for colorblind hunters */
+}

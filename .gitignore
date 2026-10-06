@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 build/
+out/
+.next/
 *.tsbuildinfo
 
 # Test / coverage
@@ -26,3 +28,4 @@ npm-debug.log*
 
 # Generated baselines (regenerated at build time; see packages/engine/scripts)
 # NOTE: committed baselines live in src/config and ARE tracked.
+next-env.d.ts

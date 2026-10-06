@@ -418,8 +418,15 @@ Each has my recommendation; override any of them.
    see nothing, and the action log opens only after the game is over. Still to
    add in later steps: `grades`, `razzes`, `push_subscriptions`, `flags`, and
    the seat-settings / `get_game_state` RPCs.
-2. **Auth + lobby:** anon sign-in, create camp, join by code/link, seats +
-   settings, Realtime subscription, `get_game_state` reconnect.
+2. ✅ **DONE — Auth + lobby.** `apps/web` (Next.js static export): anonymous
+   sign-in, create/join camp by code, Home + Lobby screens, per-player
+   settings, host bot-fill + start, Realtime subscription and the
+   `get_game_state` reconnect, connection-status pill, theme vocabulary +
+   palette, device interfaces. Backend lobby RPCs added in migration 0002 and
+   verified in PGlite (19 DB tests total). Builds as a static export with no
+   env; the live multiplayer run needs Kyle's Supabase project (migrations
+   applied + anonymous sign-ins enabled). Decisions locked: query-param
+   routing, Postgres Changes, Zustand available (hooks used for now).
 3. **The action pipeline:** `submit-action` with engine validation,
    idempotency, action log; the full hand loop (deal → discard → cut → pegging
    → show → next), server-authoritative, hidden cards via RLS. Weak-signal test

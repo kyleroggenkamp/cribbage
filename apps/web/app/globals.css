@@ -1,0 +1,42 @@
+/* CSS @import rules must come first. */
+@import '../src/themes/deer-camp/palette.css';
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark-only in v1 (§1A): no white screens or bright flashes anywhere. */
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Barlow, system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+@layer components {
+  /* Gloves-and-cold tap targets (§1A). */
+  .tap {
+    @apply inline-flex items-center justify-center;
+    min-height: 48px;
+    min-width: 48px;
+  }
+  .btn {
+    @apply tap rounded-lg px-4 font-body font-semibold;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-bg;
+    min-height: 56px; /* primary buttons at least 56px tall (§1A) */
+  }
+  .btn-secondary {
+    @apply btn border border-divider bg-panel text-ink;
+  }
+  .panel {
+    @apply rounded-xl border border-divider bg-panel p-4;
+  }
+  .field {
+    @apply w-full rounded-lg border border-divider bg-bg px-3 py-3 text-ink;
+    min-height: 48px;
+  }
+}

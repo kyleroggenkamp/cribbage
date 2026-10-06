@@ -21,7 +21,8 @@ requirements, **in order**. We are in **Phase 1: engine and grader**.
 | **Phase 1 complete** pending Kyle's by-hand check of the numbers | ⬜ sign-off |
 | Phase 2 step 0 — engine runs in a Supabase Edge Function | ✅ done |
 | Phase 2 step 1 — Postgres schema + RLS wall + lobby RPCs (security tests pass) | ✅ done |
-| Phase 2 steps 2+ — lobby UI, action pipeline, table UI, grading, ... | ⬜ next |
+| Phase 2 step 2 — Next.js static-export app: anon auth, lobby UI, realtime, reconnect | ✅ done (builds; live run needs your Supabase) |
+| Phase 2 steps 3+ — action pipeline / dealing, table UI, §1A behaviors, grading | ⬜ next |
 
 The engine is a pure TypeScript package with **no UI and no network code**
 (REQUIREMENTS 0 and 7A), so both the web app and the Supabase Edge Functions
@@ -64,6 +65,12 @@ packages/
     test/              # Vitest unit tests; *.slow.test.ts = statistical checks
   db/                  # @deercamp/db — schema + RLS tests vs in-process Postgres
     test/              #   PGlite harness + the security-wall tests
+apps/
+  web/                 # @deercamp/web — Next.js static-export front end
+    app/               #   Home + Lobby screens (routing by ?c=camp code)
+    src/net/           #   supabase client, anon auth, RPC wrappers, realtime
+    src/themes/        #   deer-camp vocabulary + palette (CSS vars)
+    src/device/        #   haptics, notifications, wakelock, share, storage
 supabase/
   migrations/          # SQL: tables, RLS policies, lobby RPCs (source of truth)
   functions/           # Edge Functions (Deno); score-hand spike (step 0)
