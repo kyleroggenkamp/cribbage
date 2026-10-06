@@ -410,8 +410,14 @@ Each has my recommendation; override any of them.
 0. ✅ **DONE — Spike:** Edge Function imports `@deercamp/engine` and scores a
    hand. Proves §4. (Built + verified here; final deploy is one command on
    Kyle's machine — `supabase/README.md`.)
-1. **Supabase schema + RLS + RPCs** (`join-camp`, code generation) with the
-   security tests for `private_cards` written first.
+1. ✅ **DONE — Supabase schema + RLS + lobby RPCs.** `supabase/migrations/
+   0001_init.sql` (games, seats, hands, private_cards, actions; the RLS wall;
+   `create_camp` / `join_camp` / code generation). Verified against real
+   Postgres in-process (PGlite) in `packages/db` — 12 tests prove a player
+   can't read another's hand, the crib is hidden until the show, non-members
+   see nothing, and the action log opens only after the game is over. Still to
+   add in later steps: `grades`, `razzes`, `push_subscriptions`, `flags`, and
+   the seat-settings / `get_game_state` RPCs.
 2. **Auth + lobby:** anon sign-in, create camp, join by code/link, seats +
    settings, Realtime subscription, `get_game_state` reconnect.
 3. **The action pipeline:** `submit-action` with engine validation,

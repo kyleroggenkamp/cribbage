@@ -19,7 +19,9 @@ requirements, **in order**. We are in **Phase 1: engine and grader**.
 | CLI: `npm run score` | ✅ done |
 | CLI: `npm run deal` (deals, cuts, ranks every discard with points given away) | ✅ done |
 | **Phase 1 complete** pending Kyle's by-hand check of the numbers | ⬜ sign-off |
-| Multiplayer, UI, PWA (Phases 2–3) | ⬜ not started |
+| Phase 2 step 0 — engine runs in a Supabase Edge Function | ✅ done |
+| Phase 2 step 1 — Postgres schema + RLS wall + lobby RPCs (security tests pass) | ✅ done |
+| Phase 2 steps 2+ — lobby UI, action pipeline, table UI, grading, ... | ⬜ next |
 
 The engine is a pure TypeScript package with **no UI and no network code**
 (REQUIREMENTS 0 and 7A), so both the web app and the Supabase Edge Functions
@@ -60,6 +62,11 @@ packages/
     scripts/
       generate-baselines.ts  # simulates deals to produce baselines.ts
     test/              # Vitest unit tests; *.slow.test.ts = statistical checks
+  db/                  # @deercamp/db — schema + RLS tests vs in-process Postgres
+    test/              #   PGlite harness + the security-wall tests
+supabase/
+  migrations/          # SQL: tables, RLS policies, lobby RPCs (source of truth)
+  functions/           # Edge Functions (Deno); score-hand spike (step 0)
 ```
 
 ## Running it (beginner-friendly)
@@ -68,8 +75,9 @@ You need [Node.js](https://nodejs.org) 20 or newer. Then, from the repo root:
 
 ```bash
 npm install          # one time, installs dev tools
-npm test             # run the fast unit tests
+npm test             # run the unit tests (engine + the DB security tests)
 npm run typecheck    # confirm the types are sound
+npm test -w @deercamp/db   # just the Postgres RLS / security-wall tests
 
 # From packages/engine: the slow statistical checks and baseline regen:
 npm run test:slow        # zero-mean luck baseline checks (~90s)

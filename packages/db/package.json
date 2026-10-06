@@ -1,0 +1,14 @@
+{
+  "name": "@deercamp/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Supabase schema + RLS tests, run against in-process Postgres (PGlite).",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "vitest": "^2.1.8"
+  }
+}
