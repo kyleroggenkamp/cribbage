@@ -25,6 +25,10 @@ export interface Vocabulary {
   silent: string;
   standMode: string;
   notifications: string;
+  deerHold: string; // the always-visible hold button
+  play: string;
+  theShow: string;
+  tagged: string; // winning headline ("Tagged out!")
 }
 
 /** Neutral base strings (theme-independent). */
@@ -48,6 +52,10 @@ export const base: Vocabulary = {
   silent: 'Silent',
   standMode: 'Dim screen',
   notifications: 'Turn alerts',
+  deerHold: 'Hold',
+  play: 'Play',
+  theShow: 'The count',
+  tagged: 'Game over',
 };
 
 export const deerCamp: Vocabulary = {
@@ -70,6 +78,10 @@ export const deerCamp: Vocabulary = {
   silent: 'Silent',
   standMode: 'Stand mode (dim)',
   notifications: 'Turn alerts',
+  deerHold: 'Deer! Hold',
+  play: 'Play',
+  theShow: 'The show',
+  tagged: 'Tagged out!',
 };
 
 const THEMES: Record<string, Vocabulary> = {
