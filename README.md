@@ -14,10 +14,11 @@ requirements, **in order**. We are in **Phase 1: engine and grader**.
 | Rules engine — deck, deal, the play (pegging), the show, winning (Section 3) | ✅ done |
 | Grader core — discard grading, pegging grading, scores & stand rank (4A.1–4A.4) | ✅ done |
 | Grader — luck vs. skill (4A.7) + hindsight (4A.8) + baselines | ✅ done |
-| Section 8 **engine + grader** tests | ✅ passing (77 fast + 2 slow) |
+| Camp bots — Easy level, reuse the grader's evaluators (Section 4) | ✅ done |
+| Section 8 **engine + grader** tests | ✅ passing (84 fast + 2 slow) |
 | CLI: `npm run score` | ✅ done |
 | CLI: `npm run deal` (deals, cuts, ranks every discard with points given away) | ✅ done |
-| Camp bots (Section 4) | ⬜ next |
+| **Phase 1 complete** pending Kyle's by-hand check of the numbers | ⬜ sign-off |
 | Multiplayer, UI, PWA (Phases 2–3) | ⬜ not started |
 
 The engine is a pure TypeScript package with **no UI and no network code**
@@ -51,6 +52,10 @@ packages/
         hindsight.ts       # coulda-shoulda: per-starter what-ifs + verdict
         baseline-cases.ts  # the six luck "cases" (player count x side)
         baselines.ts       # GENERATED luck baselines (npm run gen:baselines)
+      bots/            # camp bots (Section 4) — Easy level, built on the grader
+        discard.ts         # highest-value discard
+        pegging.ts         # evaluator-best pegging card + play chooser
+        config.ts          # bot move-delay range (applied by the app layer)
       cli/             # npm run score / npm run deal
     scripts/
       generate-baselines.ts  # simulates deals to produce baselines.ts
@@ -105,6 +110,13 @@ has been corrected to match. The test suite encodes the corrected hand
 
 ## What's next
 
-- **Camp bots (Section 4)** on top of the grader's discard/pegging evaluators.
-- Then Phase 2 (Supabase, the table UI, the theme system, holds, weak-signal
+Phase 1's engine, grader, and bots are built. The remaining Phase 1 gate is
+the human one (Section 9 acceptance): **Kyle checks a set of hands by hand and
+agrees with the scores and rankings.** Use `npm run score` and `npm run deal`
+to spot-check. Then:
+
+- Phase 2 (Supabase, the table UI, the theme system, holds, weak-signal
   handling) and Phase 3 (PWA, push, etc.).
+
+Camp bots are graded by the same grader as humans (4A.4), so no extra work is
+needed to compare a human against a bot — a bot's choices rank like anyone's.

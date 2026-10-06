@@ -18,3 +18,6 @@ export * from './show.js';
 
 // The grader ("Stand report"), REQUIREMENTS 4A.
 export * from './grader/index.js';
+
+// Camp bots, REQUIREMENTS Section 4.
+export * from './bots/index.js';

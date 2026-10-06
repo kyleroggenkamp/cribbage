@@ -37,12 +37,10 @@ export interface DiscardGrade {
   readonly rank: RankResult;
 }
 
-export interface DiscardGradeArgs {
+export interface DiscardOptionsArgs {
   readonly playerCount: PlayerCount;
   /** All cards dealt to the player (6 in 2-player, 5 in 3/4-player). */
   readonly dealt: readonly Card[];
-  /** The cards the player actually threw. */
-  readonly chosenDiscard: readonly Card[];
   /** True if the crib belongs to this player (or their team). */
   readonly cribIsMine: boolean;
   /** Deterministic seed: game id + hand number. */
@@ -50,16 +48,24 @@ export interface DiscardGradeArgs {
   readonly cribSimIterations?: number;
 }
 
+export interface DiscardGradeArgs extends DiscardOptionsArgs {
+  /** The cards the player actually threw. */
+  readonly chosenDiscard: readonly Card[];
+}
+
 function sameCardSet(a: readonly Card[], b: readonly Card[]): boolean {
   if (a.length !== b.length) return false;
   return a.every((card) => b.some((o) => cardsEqual(card, o)));
 }
 
-export function gradeDiscard(args: DiscardGradeArgs): DiscardGrade {
+/**
+ * Value every legal discard and return them sorted best (highest value) to
+ * worst. Shared by gradeDiscard and the camp bots.
+ */
+export function discardOptions(args: DiscardOptionsArgs): DiscardOption[] {
   const {
     playerCount,
     dealt,
-    chosenDiscard,
     cribIsMine,
     seed,
     cribSimIterations = CRIB_SIM_ITERATIONS,
@@ -69,11 +75,6 @@ export function gradeDiscard(args: DiscardGradeArgs): DiscardGrade {
   if (dealt.length !== cfg.dealtEach) {
     throw new Error(
       `${playerCount}-player is dealt ${cfg.dealtEach}, got ${dealt.length}`,
-    );
-  }
-  if (chosenDiscard.length !== cfg.discardsEach) {
-    throw new Error(
-      `${playerCount}-player throws ${cfg.discardsEach}, got ${chosenDiscard.length}`,
     );
   }
 
@@ -96,6 +97,25 @@ export function gradeDiscard(args: DiscardGradeArgs): DiscardGrade {
   );
 
   options.sort((a, b) => b.value - a.value);
+  return options;
+}
+
+/** The highest-value legal discard — the camp bot's choice (Section 4). */
+export function bestDiscardOption(args: DiscardOptionsArgs): DiscardOption {
+  return discardOptions(args)[0]!;
+}
+
+export function gradeDiscard(args: DiscardGradeArgs): DiscardGrade {
+  const { playerCount, chosenDiscard } = args;
+  const cfg = DEAL_CONFIG[playerCount];
+
+  if (chosenDiscard.length !== cfg.discardsEach) {
+    throw new Error(
+      `${playerCount}-player throws ${cfg.discardsEach}, got ${chosenDiscard.length}`,
+    );
+  }
+
+  const options = discardOptions(args);
   const best = options[0]!;
 
   const chosen = options.find((o) => sameCardSet(o.discard, chosenDiscard));

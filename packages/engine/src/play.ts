@@ -38,6 +38,8 @@ export interface ChooserContext {
   /** Cards already down in the current series (since the last reset). */
   readonly series: Card[];
   readonly count: number;
+  /** Every card played so far this hand, across all series (in play order). */
+  readonly played: Card[];
 }
 
 export type CardChooser = (ctx: ChooserContext) => Card;
@@ -62,11 +64,12 @@ export function playPegging(
   const log: PlayLogEntry[] = [];
 
   const totalCards = remaining.reduce((acc, h) => acc + h.length, 0);
-  let played = 0;
+  let playedCount = 0;
 
   let turn = leadSeat;
   let count = 0;
   let series: Card[] = [];
+  const played: Card[] = [];
   let lastPlayed = -1;
   let goCount = 0;
 
@@ -79,7 +82,7 @@ export function playPegging(
     return from; // nobody has cards; caller is about to stop
   };
 
-  while (played < totalCards) {
+  while (playedCount < totalCards) {
     const hand = remaining[turn]!;
 
     if (hand.length === 0) {
@@ -118,7 +121,14 @@ export function playPegging(
     }
 
     // Play a card.
-    const card = choose({ seat: turn, hand: [...hand], legal, series: [...series], count });
+    const card = choose({
+      seat: turn,
+      hand: [...hand],
+      legal,
+      series: [...series],
+      count,
+      played: [...played],
+    });
     const idx = hand.findIndex((c) => c === card);
     if (idx < 0) throw new Error('Chooser returned a card not in hand');
     hand.splice(idx, 1);
@@ -127,7 +137,8 @@ export function playPegging(
     const sc = scorePegCard(before, card);
     series = [...before, card];
     count = sc.total;
-    played++;
+    played.push(card);
+    playedCount++;
     pegPoints[turn]! += sc.points;
     goCount = 0;
 
