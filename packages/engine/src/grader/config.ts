@@ -16,6 +16,26 @@ export const CRIB_SIM_ITERATIONS = 2000;
 /** "Hail Mary" kept-hand target used by the future guide (R1). */
 export const HAIL_MARY_THRESHOLD = 12;
 
+/**
+ * Hindsight: the actual throw "favored by the cut" if it was the hindsight best
+ * or within this many points of it (4A.8 verdict table).
+ */
+export const CUT_FAVORED_TOLERANCE = 1;
+
+/**
+ * Thresholds for the winner's game-over headline (4A.7). Luck and skill-loss
+ * are the winner's game totals (skill-loss is a positive number of points
+ * given away).
+ */
+export const WINNER_HEADLINE = {
+  /** Luck this much bigger than skill-loss => "Won on cards". */
+  luckOverSkillLoss: 5,
+  /** Skill-loss at or below this, with luck near zero/negative => "Won on play". */
+  smallSkillLoss: 3,
+  /** |luck| at or below this counts as "near zero". */
+  luckNearZero: 3,
+} as const;
+
 export interface StandRankBand {
   /** Upper bound (inclusive) on average points lost per hand. */
   readonly maxAvgLost: number;

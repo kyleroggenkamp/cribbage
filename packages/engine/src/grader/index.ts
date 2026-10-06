@@ -19,3 +19,8 @@ export * from './crib-estimate.js';
 export * from './discard.js';
 export * from './pegging.js';
 export * from './scores.js';
+export * from './baseline-cases.js';
+export * from './baselines.js';
+export * from './pegging-policy.js';
+export * from './luck.js';
+export * from './hindsight.js';

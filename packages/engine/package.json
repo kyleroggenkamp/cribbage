@@ -10,10 +10,12 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:slow": "vitest run --config vitest.slow.config.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "deal": "tsx src/cli/deal.ts",
-    "score": "tsx src/cli/score.ts"
+    "score": "tsx src/cli/score.ts",
+    "gen:baselines": "tsx scripts/generate-baselines.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
