@@ -15,3 +15,6 @@ export * from './score-hand.js';
 export * from './score-pegging.js';
 export * from './play.js';
 export * from './show.js';
+
+// The grader ("Stand report"), REQUIREMENTS 4A.
+export * from './grader/index.js';

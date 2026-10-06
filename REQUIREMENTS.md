@@ -356,7 +356,7 @@ v1 is a free web app. A native iPhone/Android version (wrapped with Capacitor) m
 The rules engine must pass unit tests for at least these cases before Phase 2 starts:
 - 5♣ 5♦ 5♥ J♠ with starter 5♠ = 29
 - 4-4-5-6 + starter 6 (double-double run) = 24
-- 7-8-8-9 + starter 9 = 24 (double-double run with fifteens)
+- 7-7-8-8 + starter 9 = 24 (double-double run with fifteens)
 - 4-card hand flush = 4; 4-card flush + matching starter = 5; 4-card crib flush = 0; 5-card crib flush = 5
 - Nobs counts only when the Jack is in hand, not when it is the starter
 - His heels (starter Jack) = 2 to dealer

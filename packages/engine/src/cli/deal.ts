@@ -1,20 +1,23 @@
 /**
- * CLI: deal a random hand and show the cut and each hand's show-count.
- * REQUIREMENTS Section 9 (Phase 1 tooling).
+ * CLI: deal a random hand and rank every discard option for the player.
+ * REQUIREMENTS Section 9 (Phase 1 tooling), 4A.2.
  *
  *   npm run deal            # 2-player
  *   npm run deal -- 3       # 3-player
  *
- * NOTE: the full Phase 1 spec for this command also ranks every discard option
- * by value and "points given away". That ranking is produced by the grader
- * (REQUIREMENTS 4A.2), which is the next increment on top of this engine. Until
- * then this command deals, cuts, and scores — a smoke test for the engine.
+ * Grades seat 0's hand as the dealer (so the crib is theirs), listing every
+ * legal discard ranked by value, with the points given away vs. the best.
  */
 
-import { makeDeck } from '../cards.js';
+import { makeDeck, type Card } from '../cards.js';
 import { cryptoShuffle } from '../rng.js';
 import { dealHands, cutStarter, hisHeels, type PlayerCount } from '../deal.js';
-import { scoreHand, describeScore } from '../score-hand.js';
+import { gradeDiscard } from '../grader/discard.js';
+import { rankPhrase } from '../grader/rank.js';
+import { rankOf } from '../grader/rank.js';
+
+const fmt = (cs: readonly Card[]) =>
+  cs.map((c) => `${c.rank}${c.suit}`.padStart(3, ' ')).join(' ');
 
 function main(argv: string[]): void {
   const pcRaw = argv[0] ? Number(argv[0]) : 2;
@@ -29,35 +32,47 @@ function main(argv: string[]): void {
   const { hands, cribSeed, stock } = dealHands(playerCount, deck);
   const starter = cutStarter(stock);
 
-  const fmt = (cs: { rank: string; suit: string }[]) =>
-    cs.map((c) => `${c.rank}${c.suit}`).join(' ');
-
-  console.log(`Deal: ${playerCount}-player`);
-  console.log(`Starter (cut): ${starter.rank}${starter.suit}`);
-  if (hisHeels(starter) > 0) {
-    console.log('  -> His heels: dealer pegs 2');
-  }
+  console.log(`Deal: ${playerCount}-player  (seat 0 = dealer, crib is theirs)`);
+  console.log('');
+  hands.forEach((hand, seat) => console.log(`Seat ${seat}: ${fmt(hand)}`));
+  if (cribSeed.length > 0) console.log(`Crib seed: ${fmt(cribSeed)}`);
+  console.log(`Starter (cut, for reference): ${starter.rank}${starter.suit}`);
+  if (hisHeels(starter) > 0) console.log('  -> His heels: dealer pegs 2');
   console.log('');
 
-  hands.forEach((hand, seat) => {
-    console.log(`Seat ${seat}: ${fmt(hand)}`);
+  // Grade seat 0 as the dealer. Pick an arbitrary "chosen" discard (the first
+  // legal one) just to satisfy the API; we print the full ranked list.
+  const dealt = hands[0]!;
+  const seed = `cli:${Math.random().toString(36).slice(2)}`;
+
+  const firstDiscard =
+    playerCount === 2 ? dealt.slice(0, 2) : dealt.slice(0, 1);
+  const grade = gradeDiscard({
+    playerCount,
+    dealt,
+    chosenDiscard: firstDiscard,
+    cribIsMine: true,
+    seed,
   });
-  if (cribSeed.length > 0) {
-    console.log(`Crib seed (dealt to crib): ${fmt(cribSeed)}`);
+
+  const values = grade.options.map((o) => o.value);
+  console.log('Seat 0 discard options, best to worst:');
+  console.log('  throw        keep               value  gave away  rank');
+  for (const opt of grade.options) {
+    const gaveAway = grade.best.value - opt.value;
+    const rank = rankOf(opt.value, values);
+    console.log(
+      `  ${fmt(opt.discard).padEnd(9)}  ${fmt(opt.keep).padEnd(16)}  ` +
+        `${opt.value.toFixed(2).padStart(5)}  ${gaveAway
+          .toFixed(2)
+          .padStart(9)}  ${rankPhrase(rank)}`,
+    );
   }
   console.log('');
-  console.log('If each seat kept its full dealt hand, the show would score:');
-  console.log('(illustrative only — real play keeps 4 after discarding)');
-  hands.forEach((hand, seat) => {
-    if (hand.length === 4) {
-      const s = scoreHand(hand, starter, false);
-      console.log(`  Seat ${seat}: ${s.total}  (${describeScore(s)})`);
-    } else {
-      console.log(
-        `  Seat ${seat}: has ${hand.length} cards; discard to 4 before the show`,
-      );
-    }
-  });
+  console.log(
+    `value = expected hand + expected crib (own crib). ` +
+      `Crib estimate is seeded, so this is reproducible per seed.`,
+  );
 }
 
 main(process.argv.slice(2));
