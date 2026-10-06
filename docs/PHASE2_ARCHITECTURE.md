@@ -427,10 +427,20 @@ Each has my recommendation; override any of them.
    env; the live multiplayer run needs Kyle's Supabase project (migrations
    applied + anonymous sign-ins enabled). Decisions locked: query-param
    routing, Postgres Changes, Zustand available (hooks used for now).
-3. **The action pipeline:** `submit-action` with engine validation,
-   idempotency, action log; the full hand loop (deal → discard → cut → pegging
-   → show → next), server-authoritative, hidden cards via RLS. Weak-signal test
-   here.
+3. 🟡 **IN PROGRESS — the action pipeline.** The server-authoritative state
+   machine `@deercamp/game` is DONE and tested (23 tests): the incremental
+   pegging stepper (cross-checked against the engine's playPegging over 900
+   random deals), the full hand loop (deal → discard → cut/his-heels → pegging
+   → show → next, with counting-out/his-heels wins), idempotent `reduce`, camp
+   bots driving a game to a winner (2p + 4p), and `project()` mapping state to
+   public rows + per-seat private cards. Persistence decision: the authoritative
+   state is a server-only `engine_state` JSONB blob (migration 0003, RLS-proven
+   unreadable by clients); the public parts project into games/hands + per-seat
+   private_cards. The `submit-action` Edge Function (load → reduce → runBots →
+   auto-deal → persist → project) is written to spec but **not yet run against
+   live Supabase**. Remaining (step 3b): the client offline/retry queue (§1A
+   weak-signal), the start/deal orchestration verified live, and the
+   offline-applies-once test.
 4. **Table UI + pegboard + theme system** (build once on the server), including
    the `plain`-theme acceptance proof.
 5. **§1A behaviors:** offline queue, connection status, Deer! hold, no timers,

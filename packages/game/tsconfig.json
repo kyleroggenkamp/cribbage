@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": [],
+    "paths": { "@deercamp/engine": ["../engine/dist/index.d.ts"] }
+  },
+  "include": ["src"]
+}

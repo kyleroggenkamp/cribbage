@@ -9,3 +9,8 @@ project_id = "deer-camp-cribbage"
 verify_jwt = false
 # Resolve `@deercamp/engine` to the built engine (see functions/import_map.json).
 import_map = "./functions/import_map.json"
+
+[functions.submit-action]
+# The action pipeline verifies the caller's JWT and maps them to a seat.
+verify_jwt = true
+import_map = "./functions/import_map.json"

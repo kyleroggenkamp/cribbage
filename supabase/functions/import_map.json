@@ -1,5 +1,6 @@
 {
   "imports": {
-    "@deercamp/engine": "../../packages/engine/dist/index.js"
+    "@deercamp/engine": "../../packages/engine/dist/index.js",
+    "@deercamp/game": "../../packages/game/dist/index.js"
   }
 }

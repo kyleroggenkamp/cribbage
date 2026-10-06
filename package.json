@@ -8,6 +8,7 @@
     "apps/*"
   ],
   "scripts": {
+    "build": "npm run build -w @deercamp/engine && npm run build -w @deercamp/game",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "deal": "npm run deal --workspace @deercamp/engine",

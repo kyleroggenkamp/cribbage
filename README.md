@@ -22,7 +22,8 @@ requirements, **in order**. We are in **Phase 1: engine and grader**.
 | Phase 2 step 0 — engine runs in a Supabase Edge Function | ✅ done |
 | Phase 2 step 1 — Postgres schema + RLS wall + lobby RPCs (security tests pass) | ✅ done |
 | Phase 2 step 2 — Next.js static-export app: anon auth, lobby UI, realtime, reconnect | ✅ done (builds; live run needs your Supabase) |
-| Phase 2 steps 3+ — action pipeline / dealing, table UI, §1A behaviors, grading | ⬜ next |
+| Phase 2 step 3 — server game state machine (`@deercamp/game`), engine_state persistence, submit-action pipeline | ✅ core done & tested; Edge Function written (live run needs your Supabase) |
+| Phase 2 steps 3b+ — client offline queue, table UI, §1A behaviors, grading | ⬜ next |
 
 The engine is a pure TypeScript package with **no UI and no network code**
 (REQUIREMENTS 0 and 7A), so both the web app and the Supabase Edge Functions
@@ -63,6 +64,9 @@ packages/
     scripts/
       generate-baselines.ts  # simulates deals to produce baselines.ts
     test/              # Vitest unit tests; *.slow.test.ts = statistical checks
+  game/                # @deercamp/game — server-authoritative state machine
+    src/               #   pegging stepper, hand lifecycle, reducer, project()
+    test/              #   incremental pegging cross-check + full bot games
   db/                  # @deercamp/db — schema + RLS tests vs in-process Postgres
     test/              #   PGlite harness + the security-wall tests
 apps/
