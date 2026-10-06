@@ -42,14 +42,16 @@ export interface GameTableProps {
 export function GameTable(props: GameTableProps) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col px-3 py-3">
-      {/* Pegboard + scores */}
-      <section className="panel !p-3">
-        <Pegboard lanes={props.lanes} />
-        <div className="mt-2 flex justify-around">
+      {/* Pegboard + scores (the serpentine board is tall, so cap its width) */}
+      <section className="panel flex items-center gap-3 !p-3">
+        <div style={{ maxWidth: 140, flex: '0 0 auto' }}>
+          <Pegboard lanes={props.lanes} />
+        </div>
+        <div className="flex flex-1 flex-col gap-3">
           {props.teams.map((tm, i) => (
-            <div key={i} className="text-center">
+            <div key={i}>
               <div className="text-xs text-ink-dim">{tm.name}</div>
-              <div className="font-num text-2xl" style={{ color: props.lanes[i]?.color }}>
+              <div className="font-num text-3xl" style={{ color: props.lanes[i]?.color }}>
                 {tm.score}
               </div>
             </div>

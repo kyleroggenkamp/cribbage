@@ -1,8 +1,14 @@
 /**
- * The pegboard — "trail to the buck pole" (REQUIREMENTS §5.2). A wood-plank
- * board, 4 rows of 30 holes (1-30, 31-60, 61-90, 91-120) in groups of 5, one
- * lane per player/team per row, the 121 "Buck pole" hole, and the skunk line at
- * 91. Two pegs per side, leapfrog style (back peg dimmer). Fits a 390px phone.
+ * The pegboard — "trail to the buck pole" (REQUIREMENTS §5.2), drawn as a
+ * classic serpentine 3-street board: Start at the bottom-left, up the left
+ * street, around the top, down the right street, around the bottom, then up the
+ * center street to the finish (121). Each rank has one hole per lane
+ * (player/team); two pegs per lane, leapfrog style (back peg dimmer). The small
+ * grid underneath is the games-won counter.
+ *
+ * Geometry is generated along a centerline and resampled to 122 evenly-spaced
+ * positions (0 = Start … 121 = finish), so layout tweaks are just the constants
+ * below.
  */
 
 export interface PegLane {
@@ -14,89 +20,195 @@ export interface PegLane {
 
 export interface PegboardProps {
   lanes: PegLane[];
-  width?: number;
+  skunkLine?: number; // default 91
 }
 
-const HOLES_PER_ROW = 30;
-const ROWS = 4;
-const L = 30; // left margin (labels)
-const R = 30; // right margin (buck pole)
-const S = 9; // hole spacing
-const GROUP_GAP = 6; // extra gap every 5 holes
-const LANE_GAP = 11;
-const TOP = 12;
-const ROW_PAD = 14;
+// ---- layout knobs ----------------------------------------------------------
+const VB_W = 200;
+const VB_H = 400;
+const xL = 48;
+const xC = 100;
+const xR = 152;
+const yTop = 64; // top of the straight streets
+const yBot = 320; // bottom of the straight streets
+const yCenterTop = 54; // where the center street ends (just inside the top loop)
+const rTop = (xR - xL) / 2;
+const rBot = (xR - xC) / 2;
+const LANE_GAP = 7.5;
+const HOLE_R = 2.6;
 
-function colX(col: number): number {
-  return L + col * S + Math.floor(col / 5) * GROUP_GAP;
+interface P { x: number; y: number }
+
+function straight(x: number, y0: number, y1: number, n: number): P[] {
+  return Array.from({ length: n }, (_, i) => ({ x, y: y0 + ((y1 - y0) * i) / (n - 1) }));
+}
+function arc(cx: number, cy: number, r: number, a0: number, a1: number, n: number, sign: number): P[] {
+  return Array.from({ length: n }, (_, i) => {
+    const a = a0 + ((a1 - a0) * i) / (n - 1);
+    return { x: cx + r * Math.cos(a), y: cy + sign * r * Math.sin(a) };
+  });
 }
 
-export function Pegboard({ lanes, width = 360 }: PegboardProps) {
-  const rowBlockH = lanes.length * LANE_GAP + ROW_PAD;
-  const height = TOP + ROWS * rowBlockH + 18;
-  const rowY = (row: number) => TOP + row * rowBlockH + 6;
-  const laneY = (row: number, li: number) => rowY(row) + li * LANE_GAP;
-  const buckX = colX(29) + 22;
+/** Resample a dense polyline to exactly `count` evenly-spaced points. */
+function resample(pts: P[], count: number): P[] {
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i]!.x - pts[i - 1]!.x;
+    const dy = pts[i]!.y - pts[i - 1]!.y;
+    cum.push(cum[i - 1]! + Math.hypot(dx, dy));
+  }
+  const total = cum[cum.length - 1]!;
+  const out: P[] = [];
+  let seg = 1;
+  for (let k = 0; k < count; k++) {
+    const target = (k / (count - 1)) * total;
+    while (seg < pts.length - 1 && cum[seg]! < target) seg++;
+    const t = (target - cum[seg - 1]!) / Math.max(1e-6, cum[seg]! - cum[seg - 1]!);
+    out.push({
+      x: pts[seg - 1]!.x + (pts[seg]!.x - pts[seg - 1]!.x) * t,
+      y: pts[seg - 1]!.y + (pts[seg]!.y - pts[seg - 1]!.y) * t,
+    });
+  }
+  return out;
+}
 
-  // score 1..120 -> {row,col}; drawn relative to the lane line.
-  const pos = (score: number, li: number): { x: number; y: number } | null => {
-    if (score <= 0) return { x: L - 12, y: laneY(0, li) };
-    if (score >= 121) return { x: buckX, y: laneY(3, li) };
-    const row = Math.floor((score - 1) / 30);
-    const col = (score - 1) % 30;
-    return { x: colX(col), y: laneY(row, li) };
+// Build the centerline once (module scope — it never changes).
+const CENTERS: P[] = (() => {
+  const dense: P[] = [
+    ...straight(xL, yBot, yTop, 90), // up the left street
+    ...arc(xC, yTop, rTop, Math.PI, 0, 60, -1).slice(1), // over the top (left->right)
+    ...straight(xR, yTop, yBot, 90).slice(1), // down the right street
+    ...arc((xR + xC) / 2, yBot, rBot, 0, Math.PI, 40, 1).slice(1), // around the bottom (right->center)
+    ...straight(xC, yBot, yCenterTop, 80).slice(1), // up the center street to the finish
+  ];
+  return resample(dense, 122); // indices 0..121
+})();
+
+function perp(i: number): P {
+  const a = CENTERS[Math.max(0, i - 1)]!;
+  const b = CENTERS[Math.min(121, i + 1)]!;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: -dy / len, y: dx / len };
+}
+
+function laneOffset(laneIndex: number, lanes: number): number {
+  return (laneIndex - (lanes - 1) / 2) * LANE_GAP;
+}
+
+export function Pegboard({ lanes, skunkLine = 91 }: PegboardProps) {
+  const n = lanes.length;
+  const holeAt = (pos: number, li: number): P => {
+    const c = CENTERS[Math.max(0, Math.min(121, pos))]!;
+    const pp = perp(pos);
+    const off = laneOffset(li, n);
+    return { x: c.x + pp.x * off, y: c.y + pp.y * off };
   };
 
+  const labels = [0, 15, 30, 45, 60, 75, 90, 105, 120];
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="pegboard">
-      {/* planks */}
-      {Array.from({ length: ROWS }, (_, row) => (
-        <rect
-          key={row}
-          x={L - 16}
-          y={rowY(row) - 8}
-          width={width - (L - 16) - 6}
-          height={rowBlockH - 2}
-          rx={5}
-          fill="var(--board-wood)"
-          opacity={0.55}
-        />
-      ))}
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} width="100%" role="img" aria-label="cribbage pegboard">
+      {/* board body: trace the centerline as a thick wood stroke */}
+      <polyline
+        points={CENTERS.map((c) => `${c.x},${c.y}`).join(' ')}
+        fill="none"
+        stroke="var(--board-wood)"
+        strokeWidth={n * LANE_GAP + 10}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        opacity={0.55}
+      />
 
-      {/* holes + row range labels */}
-      {Array.from({ length: ROWS }, (_, row) => (
-        <g key={`r${row}`}>
-          <text x={6} y={rowY(row) + (lanes.length * LANE_GAP) / 2} fontSize={7} fill="var(--text-secondary)" fontFamily='"Barlow Condensed", sans-serif'>
-            {row * 30 + 1}
+      {/* holes */}
+      {CENTERS.map((_, pos) =>
+        Array.from({ length: n }, (_, li) => {
+          const h = holeAt(pos, li);
+          return <circle key={`${pos}-${li}`} cx={h.x} cy={h.y} r={HOLE_R} fill="#0f120d" />;
+        }),
+      )}
+
+      {/* milestone numbers */}
+      {labels.map((pos) => {
+        const c = CENTERS[pos]!;
+        const pp = perp(pos);
+        const d = (n * LANE_GAP) / 2 + 7;
+        return (
+          <text
+            key={`lbl${pos}`}
+            x={c.x + pp.x * d}
+            y={c.y + pp.y * d + 2}
+            fontSize={7}
+            fill="var(--text-secondary)"
+            textAnchor="middle"
+            fontFamily='"Barlow Condensed", sans-serif'
+          >
+            {pos === 0 ? 'S' : pos}
           </text>
-          {lanes.map((_, li) =>
-            Array.from({ length: HOLES_PER_ROW }, (_, col) => (
-              <circle key={`${row}-${li}-${col}`} cx={colX(col)} cy={laneY(row, li)} r={1.8} fill="#0f120d" />
-            )),
-          )}
-        </g>
-      ))}
+        );
+      })}
 
-      {/* skunk line at 91 (start of row 3) */}
-      <line x1={colX(0) - 4} y1={rowY(3) - 8} x2={colX(0) - 4} y2={rowY(3) + lanes.length * LANE_GAP} stroke="var(--accent)" strokeWidth={1.5} opacity={0.8} />
-      <text x={colX(0) - 2} y={rowY(3) - 10} fontSize={6} fill="var(--accent-ink)" fontFamily='"Barlow Condensed", sans-serif'>skunk</text>
+      {/* skunk line tick */}
+      {(() => {
+        const c = CENTERS[skunkLine]!;
+        const pp = perp(skunkLine);
+        const d = (n * LANE_GAP) / 2 + 2;
+        return (
+          <line
+            x1={c.x - pp.x * d}
+            y1={c.y - pp.y * d}
+            x2={c.x + pp.x * d}
+            y2={c.y + pp.y * d}
+            stroke="var(--accent)"
+            strokeWidth={1.5}
+          />
+        );
+      })()}
 
-      {/* buck pole (121) */}
-      <circle cx={buckX} cy={laneY(0, 0) - 2} r={4} fill="none" stroke="var(--bone)" strokeWidth={1.2} />
-      <path d={`M${buckX - 4} ${laneY(0, 0) - 10} q4 -6 8 0 M${buckX - 4} ${laneY(0, 0) - 10} q-2 -4 -5 -4 M${buckX + 4} ${laneY(0, 0) - 10} q2 -4 5 -4`} stroke="var(--bone)" strokeWidth={1} fill="none" />
-      <text x={buckX} y={height - 6} fontSize={6.5} fill="var(--bone)" textAnchor="middle" fontFamily='"Barlow Condensed", sans-serif'>Buck pole</text>
+      {/* finish (121) ring + antler + label */}
+      {(() => {
+        const c = CENTERS[121]!;
+        return (
+          <g>
+            <circle cx={c.x} cy={c.y} r={5} fill="none" stroke="var(--bone)" strokeWidth={1.3} />
+            <path
+              d={`M${c.x - 5} ${c.y - 8} q5 -7 10 0 M${c.x - 5} ${c.y - 8} q-3 -5 -6 -5 M${c.x + 5} ${c.y - 8} q3 -5 6 -5`}
+              stroke="var(--bone)"
+              strokeWidth={1}
+              fill="none"
+            />
+          </g>
+        );
+      })()}
 
       {/* pegs: back (dim) then front (solid) per lane */}
       {lanes.map((lane, li) => {
-        const back = pos(lane.back, li);
-        const front = pos(lane.front, li);
+        const back = holeAt(lane.back, li);
+        const front = holeAt(lane.front, li);
         return (
           <g key={`peg${li}`}>
-            {back && <circle cx={back.x} cy={back.y} r={3} fill={lane.color} opacity={0.4} />}
-            {front && <circle cx={front.x} cy={front.y} r={3.4} fill={lane.color} stroke="#0f120d" strokeWidth={0.5} />}
+            <circle cx={back.x} cy={back.y} r={3} fill={lane.color} opacity={0.4} />
+            <circle cx={front.x} cy={front.y} r={3.4} fill={lane.color} stroke="#0f120d" strokeWidth={0.4} />
           </g>
         );
       })}
+
+      {/* games-won counter box (decorative): two rows of 7 */}
+      {(() => {
+        const bx = xC - 35;
+        const by = VB_H - 34;
+        return (
+          <g>
+            <rect x={bx - 6} y={by - 8} width={82} height={26} rx={3} fill="none" stroke="var(--board-wood)" />
+            {[0, 1].map((row) =>
+              Array.from({ length: 7 }, (_, i) => (
+                <circle key={`c${row}-${i}`} cx={bx + i * 10} cy={by + row * 10} r={2} fill="#0f120d" />
+              )),
+            )}
+          </g>
+        );
+      })()}
     </svg>
   );
 }

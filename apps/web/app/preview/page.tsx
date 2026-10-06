@@ -65,7 +65,7 @@ export default function Preview() {
       </Section>
 
       <Section title="Pegboard near the buck pole (3 players, skunk line)">
-        <div className="mx-auto max-w-md px-4">
+        <div className="mx-auto px-4" style={{ maxWidth: 260 }}>
           <div className="panel">
             <Pegboard
               lanes={[
