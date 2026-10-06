@@ -19,6 +19,7 @@ import {
   caseKey,
 } from './baseline-cases.js';
 import { WINNER_HEADLINE } from './config.js';
+import { extremesIndices } from './util.js';
 
 /** Cut luck: the kept hand's actual score vs. its expected score (4A.7). */
 export function cutLuck(
@@ -172,25 +173,12 @@ export function excuseLine(args: ExcuseLineArgs): string | null {
 
 /** Indices of the luckiest ("Horseshoe") players — ties included (4A.7). */
 export function luckiest(totalLucks: readonly number[]): number[] {
-  return extremes(totalLucks, Math.max);
+  return extremesIndices(totalLucks, Math.max);
 }
 
 /** Indices of the unluckiest ("Hard-luck hunter") players — ties (4A.7). */
 export function unluckiest(totalLucks: readonly number[]): number[] {
-  return extremes(totalLucks, Math.min);
-}
-
-function extremes(
-  values: readonly number[],
-  pick: (...n: number[]) => number,
-): number[] {
-  if (values.length === 0) return [];
-  const target = pick(...values);
-  const out: number[] = [];
-  values.forEach((v, i) => {
-    if (v === target) out.push(i);
-  });
-  return out;
+  return extremesIndices(totalLucks, Math.min);
 }
 
 function round1(n: number): number {

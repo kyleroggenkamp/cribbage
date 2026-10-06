@@ -7,6 +7,7 @@
  */
 
 import { STAND_RANK_BANDS, type StandRankBand } from './config.js';
+import { extremesIndices } from './util.js';
 
 export interface HandPointsLost {
   readonly discard: number;
@@ -61,11 +62,5 @@ export function summarizePlayerGame(
  * "Button Buck of the Game" award. Ties return every tied index (4A.4).
  */
 export function buttonBuckOfGame(totalsLost: readonly number[]): number[] {
-  if (totalsLost.length === 0) return [];
-  const max = Math.max(...totalsLost);
-  const winners: number[] = [];
-  totalsLost.forEach((t, i) => {
-    if (t === max) winners.push(i);
-  });
-  return winners;
+  return extremesIndices(totalsLost, Math.max);
 }

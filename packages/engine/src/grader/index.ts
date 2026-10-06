@@ -12,6 +12,7 @@
  */
 
 export * from './config.js';
+export * from './util.js';
 export * from './combinatorics.js';
 export * from './rank.js';
 export * from './expected-hand.js';

@@ -48,6 +48,15 @@ describe('hand lifecycle (REQUIREMENTS §3)', () => {
     expect(g.events.some((e) => e.kind === 'his-heels')).toBe(true);
   });
 
+  it('rejects a non-distinct discard (the same card twice)', () => {
+    const g = newGame(TWO, 0);
+    reduce(g, dealAction(makeDeck(), 1));
+    const x = g.hand!.dealt[0]![0]!;
+    expect(() => reduce(g, { id: 'dup', type: 'discard', seat: 0, cards: [x, x] })).toThrow();
+    // state not corrupted: still awaiting a real discard
+    expect(g.hand!.discarded[0]).toBe(false);
+  });
+
   it('is idempotent: replaying an action id does nothing', () => {
     const g = newGame(TWO, 0);
     reduce(g, dealAction(makeDeck(), 1));

@@ -12,6 +12,7 @@ import { type PlayerCount, DEAL_CONFIG } from '../deal.js';
 import { handTotal, scoreHand } from '../score-hand.js';
 import { combinations } from './combinatorics.js';
 import { CUT_FAVORED_TOLERANCE } from './config.js';
+import { extremesIndices } from './util.js';
 
 export interface HindsightOption {
   readonly discard: Card[];
@@ -137,11 +138,5 @@ export function verdict(rightThrow: boolean, cutDidFavor: boolean): Verdict {
 
 /** Index/indices of the biggest hindsight spread at the table (ties). */
 export function couldaShouldaCallout(spreads: readonly number[]): number[] {
-  if (spreads.length === 0) return [];
-  const max = Math.max(...spreads);
-  const out: number[] = [];
-  spreads.forEach((s, i) => {
-    if (s === max) out.push(i);
-  });
-  return out;
+  return extremesIndices(spreads, Math.max);
 }

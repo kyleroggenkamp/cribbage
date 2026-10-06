@@ -30,17 +30,20 @@ export interface CribEstimateArgs {
   readonly iterations?: number;
 }
 
-/** Draw `n` distinct cards from `pool` using the seeded rng (no replacement). */
+/**
+ * Draw `n` distinct cards from `pool` using the seeded rng (no replacement).
+ * Operates IN PLACE with a partial Fisher-Yates: it permutes `pool` but keeps
+ * every element, so the caller can reuse one array across all iterations (each
+ * call is still a uniform random n-subset). No per-iteration allocation.
+ */
 function drawDistinct(pool: Card[], n: number, rng: ReturnType<typeof seededRng>): Card[] {
-  // Partial Fisher-Yates: enough to pick n without copying the whole pool each time.
-  const copy = [...pool];
   const out: Card[] = [];
   for (let i = 0; i < n; i++) {
-    const j = i + rng.int(copy.length - i);
-    const tmp = copy[i]!;
-    copy[i] = copy[j]!;
-    copy[j] = tmp;
-    out.push(copy[i]!);
+    const j = i + rng.int(pool.length - i);
+    const tmp = pool[i]!;
+    pool[i] = pool[j]!;
+    pool[j] = tmp;
+    out.push(pool[i]!);
   }
   return out;
 }

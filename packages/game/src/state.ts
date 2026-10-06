@@ -125,6 +125,14 @@ export function applyDiscard(game: GameState, seat: number, cards: Card[]): void
   for (const c of cards) {
     if (!dealt.some((d) => cardsEqual(d, c))) throw new Error('discard not in hand');
   }
+  // Reject a non-distinct discard (e.g. the same card twice): without this a
+  // malicious client could send [X, X] and keep a 5-card hand (§6, never trust
+  // the client).
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i + 1; j < cards.length; j++) {
+      if (cardsEqual(cards[i]!, cards[j]!)) throw new Error('duplicate card in discard');
+    }
+  }
   hand.kept[seat] = dealt.filter((d) => !cards.some((c) => cardsEqual(c, d)));
   hand.crib.push(...cards);
   hand.discarded[seat] = true;
