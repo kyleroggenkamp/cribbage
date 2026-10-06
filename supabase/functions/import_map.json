@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@deercamp/engine": "../../packages/engine/dist/index.js"
+  }
+}

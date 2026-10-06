@@ -9,6 +9,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "verify:dist": "npm run build && node scripts/verify-dist.mjs",
     "test": "vitest run",
     "test:slow": "vitest run --config vitest.slow.config.ts",
     "test:watch": "vitest",

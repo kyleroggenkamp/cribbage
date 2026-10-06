@@ -1,0 +1,11 @@
+# Minimal Supabase config for the Phase 2 step-0 spike.
+# Run `supabase init` to regenerate the full file if you prefer; the key bit for
+# step 0 is the [functions.score-hand] import map wiring the rules engine in.
+
+project_id = "deer-camp-cribbage"
+
+[functions.score-hand]
+# The spike takes no auth so it's easy to curl. Real functions verify the JWT.
+verify_jwt = false
+# Resolve `@deercamp/engine` to the built engine (see functions/import_map.json).
+import_map = "./functions/import_map.json"

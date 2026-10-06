@@ -103,14 +103,21 @@ explicit `.js` ESM import specifiers (which Deno also wants). So the code is
 portable; the only work is *wiring*:
 
 - **Web:** imported via the workspace, bundled by Next's bundler. No change.
-- **Deno Edge Functions:** add a `deno.json` import map aliasing
-  `@deercamp/engine` to the engine's `src/index.ts`, and let the Supabase CLI
-  bundle it at deploy. The engine's seeded RNG and crypto shuffle both work on
-  Deno.
+- **Deno Edge Functions:** import map aliasing `@deercamp/engine` to the
+  engine's **built** `dist/index.js` (not the source — see the step-0 finding
+  below). The engine's seeded RNG and crypto shuffle both work on Deno.
 
-**This is the riskiest seam, so we prove it first** (build step 0 in §19): a
-throwaway Edge Function that imports the engine and scores one hand, deployed
-and called. If that works, everything else is ordinary app work.
+**Step 0 is DONE (spike built, risk retired).** Finding: Deno does **not**
+rewrite the engine's `.js` import specifiers to the `.ts` source files, so the
+engine must be **built to real `.js` first** (`npm run build -w
+@deercamp/engine` → `dist/`), and the import map points at `dist/index.js`.
+Verified without Deno (the container can't fetch the Deno binary): the built
+dist imports and scores as plain ESM with Web-Crypto shuffle
+(`npm run verify:dist`), and `grep` confirms zero Node-only APIs in dist. The
+Edge Function (`supabase/functions/score-hand`), import map, and a one-command
+deploy/serve recipe are in `supabase/`. Final "deployed and called" is one
+command on your machine (you have the Supabase project; this container has no
+credentials). See `supabase/README.md`.
 
 > Fallback if local-path import into Edge Functions proves painful: add a build
 > step that bundles the engine to a single ESM file the function imports, or
@@ -380,28 +387,29 @@ interface, the push_subscriptions table) so Phase 3 is wiring, not rework.
 
 Each has my recommendation; override any of them.
 
-1. **Engine → Edge Function packaging.** *Rec:* Deno import map to the engine
-   source, bundled at deploy; prebundle only if that fights us. (Prototype in
-   build step 0.)
+1. **Engine → Edge Function packaging.** ✅ RESOLVED in step 0: import map →
+   built `dist/index.js` (single-file bundle held in reserve if a CLI version
+   won't bundle across directories). See §4.
 2. **Realtime transport.** *Rec:* Postgres Changes with RLS (secure per
-   subscriber) over Broadcast.
+   subscriber) over Broadcast. _(Kyle: "I don't know" → going with the rec; not
+   needed until build step 2.)_
 3. **Static-export routing for camp codes.** *Rec:* query-param/hash routing,
-   not dynamic path segments.
-4. **Client state library.** *Rec:* Zustand (small, no ceremony). Alternative:
-   plain React context.
-5. **Bot move execution.** *Rec:* server applies immediately, client paces the
-   1–2 s reveal (no server-side sleeps).
-6. **Supabase project + Vercel:** do you already have accounts/projects, or
-   should the first deliverable include a step-by-step setup in the README (the
-   §10 beginner setup)? This affects whether I can wire real env vars or stub
-   them.
+   not dynamic path segments. _(Kyle: "I don't know" → going with the rec; not
+   needed until build step 2.)_
+4. **Client state library.** *Rec:* Zustand (small, no ceremony). _(Kyle: "I
+   don't know" → going with the rec; revisit when we build the UI.)_
+5. **Bot move execution.** ✅ Kyle approved: server applies immediately, client
+   paces the 1–2 s reveal (no server-side sleeps).
+6. **Supabase project + Vercel.** ✅ Kyle has accounts, so build step 1 can wire
+   a real project (`supabase link`) rather than stubs.
 
 ---
 
 ## 19. Proposed build order (incremental, riskiest-first, test-as-we-go)
 
-0. **Spike:** Edge Function imports `@deercamp/engine` and scores a hand,
-   deployed and called. Proves §4. _(Smallest possible risk-killer.)_
+0. ✅ **DONE — Spike:** Edge Function imports `@deercamp/engine` and scores a
+   hand. Proves §4. (Built + verified here; final deploy is one command on
+   Kyle's machine — `supabase/README.md`.)
 1. **Supabase schema + RLS + RPCs** (`join-camp`, code generation) with the
    security tests for `private_cards` written first.
 2. **Auth + lobby:** anon sign-in, create camp, join by code/link, seats +
