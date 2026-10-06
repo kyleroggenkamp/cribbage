@@ -112,7 +112,7 @@ has been corrected to match. The test suite encodes the corrected hand
 (`7-7-8-8 + 9 = 24`) and also pins the old typo hand at its true value
 (`7-8-8-9 + 9 = 20`) so nobody later "fixes" the engine to a wrong number.
 
-## Two v1 grader simplifications (by design, flagged)
+## v1 grader notes (by design, flagged)
 
 - **Standard pegging policy** (used for pegging luck, 4A.7.1). The spec names
   "the pegging evaluator's choice (4A.3)". The full one-move look-ahead needs
@@ -121,11 +121,10 @@ has been corrected to match. The test suite encodes the corrected hand
   fixed tie-break. The baseline and the zero-mean luck property hold for any
   deterministic policy, so this can be upgraded later without changing the luck
   math. (Consistent with 4A.3.4: rough pegging is acceptable for v1.)
-- **Shipped baselines** in `baselines.ts` were generated at a reduced sample
-  size so the one-time job finishes quickly. Fewer samples/iterations add
-  variance, not bias, and the `test:slow` checks confirm luck stays zero-mean.
-  Regenerate at the spec's 100k scale before the field test:
-  `npm run gen:baselines -- 100000 50000`.
+- **Shipped baselines** in `baselines.ts` are generated at the spec's full
+  scale (100,000 deal-luck and 100,000 pegging-luck samples; `test:slow`
+  confirms luck stays zero-mean). Regenerate any time with
+  `npm run gen:baselines -- 100000 100000`.
 
 ## What's next
 

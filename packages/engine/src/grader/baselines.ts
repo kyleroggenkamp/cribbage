@@ -7,25 +7,25 @@ import { type BaselineSet } from './baseline-cases.js';
 
 export const BASELINES: BaselineSet = {
   meta: {
-    generatedAt: "2026-10-06T17:56:42.522Z",
-    dealLuckSamples: 500,
-    peggingSamples: 3000,
+    generatedAt: "2026-10-06T23:14:35.109Z",
+    dealLuckSamples: 100000,
+    peggingSamples: 100000,
     cribIterations: 120,
   },
   dealLuck: {
-      "2p-dealer": 13.37430289855072,
-      "2p-nondealer": 4.090497101449281,
-      "3p-dealer": 11.509085460992903,
-      "3p-nondealer": 1.9052707446808514,
-      "4p-dealer": 11.605489539007102,
-      "4p-nondealer": 2.2380652482269476
+      "2p-dealer": 13.336151242753859,
+      "2p-nondealer": 3.9649940942029316,
+      "3p-dealer": 11.475853304964474,
+      "3p-nondealer": 2.125586275709253,
+      "4p-dealer": 11.449136780141862,
+      "4p-nondealer": 2.119468664007095
   },
   peggingLuck: {
-      "2p-dealer": 3.7943333333333333,
-      "2p-nondealer": 2.4766666666666666,
-      "3p-dealer": 4.343666666666667,
-      "3p-nondealer": 2.6868333333333334,
-      "4p-dealer": 7.258333333333334,
-      "4p-nondealer": 5.971333333333333
+      "2p-dealer": 3.82495,
+      "2p-nondealer": 2.53754,
+      "3p-dealer": 4.31702,
+      "3p-nondealer": 2.695535,
+      "4p-dealer": 7.30738,
+      "4p-nondealer": 6.08561
   },
 };
