@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ensureSignedIn, currentUserId } from '@/net/auth';
 import {
@@ -12,6 +12,11 @@ import {
   startGame,
 } from '@/net/rpc';
 import { useGameState, type ConnStatus } from '@/net/useGameState';
+import { createWebActionQueue } from '@/net/actionQueueWeb';
+import type { ActionQueue } from '@/net/actionQueue';
+import { toTableView } from '@/net/gameView';
+import { LiveGame } from '@/ui/LiveGame';
+import type { EngineCard } from '@/ui/Card';
 import { storage, KEYS } from '@/device/storage';
 import { share } from '@/device/share';
 import { getVocabulary } from '@/themes/vocabulary';
@@ -34,6 +39,30 @@ export default function Lobby() {
   const [fatal, setFatal] = useState<string | null>(null);
 
   const { state, conn, error } = useGameState(gameId);
+
+  // The offline action queue (created lazily in the browser, not at build time).
+  const queueRef = useRef<ActionQueue | null>(null);
+  useEffect(() => {
+    queueRef.current = createWebActionQueue();
+  }, []);
+  function send(action: Record<string, unknown>) {
+    if (!gameId) return;
+    const id = crypto.randomUUID();
+    queueRef.current?.enqueue(gameId, id, { id, ...action });
+  }
+
+  // The host deals the first hand once the game starts (subsequent hands deal
+  // automatically after each show). Fires once.
+  const dealtRef = useRef(false);
+  useEffect(() => {
+    if (!state || !gameId || !myId) return;
+    const amHost = state.game.host_player_id === myId;
+    if (state.game.status === 'playing' && !state.hand && amHost && !dealtRef.current) {
+      dealtRef.current = true;
+      send({ type: 'deal' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, gameId, myId]);
 
   // Resolve the camp code from the URL, sign in, and join (idempotent).
   useEffect(() => {
@@ -74,14 +103,19 @@ export default function Lobby() {
     await share.shareLink(window.location.href, `Join my ${t.camp}: ${code}`);
   }
 
-  if (game.status === 'playing') {
+  if (game.status === 'playing' || game.status === 'over') {
+    if (!state.hand) return <Centered>Dealing…</Centered>;
+    const view = toTableView(state, myId);
+    const seatIdx = mySeat?.seat_index ?? null;
     return (
-      <Centered>
-        <p className="font-title text-2xl text-accent-ink">{t.start}!</p>
-        <p className="mt-2 text-ink-dim">
-          The hunt has started. The game table is the next build step.
-        </p>
-      </Centered>
+      <LiveGame
+        view={view}
+        onDiscard={(cards: EngineCard[]) => seatIdx != null && send({ type: 'discard', seat: seatIdx, cards })}
+        onPlay={(card: EngineCard) => seatIdx != null && send({ type: 'play', seat: seatIdx, card })}
+        onHold={() => {
+          /* Deer! Hold is wired in the next build step */
+        }}
+      />
     );
   }
 

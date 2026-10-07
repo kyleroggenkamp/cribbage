@@ -118,6 +118,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       turn_seat: p.hand.turn_seat,
       running_count: p.hand.running_count,
       series: p.hand.series,
+      cards_left: p.hand.cards_left,
     });
     await svc.from('private_cards').delete().eq('game_id', gameId).eq('hand_number', p.hand.hand_number);
     const seatPlayer = new Map((seats ?? []).map((s) => [s.seat_index, s.player_id]));

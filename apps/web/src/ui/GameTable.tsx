@@ -1,8 +1,9 @@
 /**
- * The game table (REQUIREMENTS §5.3), portrait phone first. Presentational: it
- * takes plain props so it renders from mock data now and from live GameState
- * later. One-handed layout — all actions sit in the bottom half; the Deer! Hold
- * and primary Play button are the bottom row; no drag gestures.
+ * The game table (REQUIREMENTS §5.3), portrait phone first. Presentational but
+ * interactive: it takes plain props (so the preview feeds mock data) plus
+ * optional tap/confirm handlers (so the live game drives it). One-handed
+ * layout — actions in the bottom half, Deer! Hold + primary button at the
+ * bottom, no drag.
  */
 
 import { Card, type EngineCard } from './Card';
@@ -27,19 +28,29 @@ export interface GameTableProps {
   teams: TableTeam[];
   lanes: PegLane[];
   opponents: TableOpponent[];
-  starter: EngineCard;
+  starter: EngineCard | null;
   cribCount: number;
-  cribIsDealers: string; // whose crib, e.g. "Kyle's crib"
+  cribLabel?: string;
   series: EngineCard[];
   count: number;
-  lastEvent?: string; // orange line, e.g. "Mike: run of 4 for 4"
+  lastEvent?: string;
   statusLine: string;
   myHand: EngineCard[];
-  selectedIndex: number | null;
-  canPlay: boolean;
+  // interaction (optional — omitted in the static preview)
+  selectedIndices?: number[];
+  /** null => every card tappable (discard); [] => none; list => only those (pegging). */
+  playableIndices?: number[] | null;
+  onCardTap?: (i: number) => void;
+  primaryLabel?: string;
+  primaryEnabled?: boolean;
+  onPrimary?: () => void;
+  onHold?: () => void;
 }
 
 export function GameTable(props: GameTableProps) {
+  const selected = props.selectedIndices ?? [];
+  const isPlayable = (i: number) => !props.playableIndices || props.playableIndices.includes(i);
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col px-3 py-3">
       {/* Pegboard + scores (the serpentine board is tall, so cap its width) */}
@@ -79,20 +90,24 @@ export function GameTable(props: GameTableProps) {
 
       {/* Starter + crib */}
       <section className="mt-3 flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-ink-dim">Cut</span>
-          <Card card={props.starter} size="md" />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-ink-dim">{props.cribIsDealers}</span>
-          <div className="relative">
-            {Array.from({ length: props.cribCount }, (_, k) => (
-              <span key={k} style={{ display: 'inline-block', marginLeft: k === 0 ? 0 : -26 }}>
-                <Card size="sm" />
-              </span>
-            ))}
+        {props.starter && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink-dim">Cut</span>
+            <Card card={props.starter} size="md" />
           </div>
-        </div>
+        )}
+        {props.cribCount > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-ink-dim">{props.cribLabel ?? 'Crib'}</span>
+            <div className="relative">
+              {Array.from({ length: props.cribCount }, (_, k) => (
+                <span key={k} style={{ display: 'inline-block', marginLeft: k === 0 ? 0 : -26 }}>
+                  <Card size="sm" />
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Pegging area */}
@@ -103,7 +118,7 @@ export function GameTable(props: GameTableProps) {
         </div>
         <div className="mt-1 flex min-h-[70px] flex-wrap gap-1">
           {props.series.map((c, i) => (
-            <Card key={i} card={c} size="md" dimmed={i < props.series.length - 1 && false} />
+            <Card key={i} card={c} size="md" />
           ))}
         </div>
         {props.lastEvent && <div className="mt-1 text-accent-ink">{props.lastEvent}</div>}
@@ -114,13 +129,22 @@ export function GameTable(props: GameTableProps) {
         <div className="mb-2 text-center font-body">{props.statusLine}</div>
         <div className="mb-3 flex justify-center gap-1">
           {props.myHand.map((c, i) => (
-            <Card key={i} card={c} size="lg" selected={props.selectedIndex === i} />
+            <Card
+              key={i}
+              card={c}
+              size="lg"
+              selected={selected.includes(i)}
+              dimmed={props.playableIndices != null && !isPlayable(i)}
+              onClick={props.onCardTap && isPlayable(i) ? () => props.onCardTap!(i) : undefined}
+            />
           ))}
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary flex-1">{t.deerHold}</button>
-          <button className="btn-primary flex-[2]" disabled={!props.canPlay}>
-            {t.play}
+          <button className="btn-secondary flex-1" onClick={props.onHold}>
+            {t.deerHold}
+          </button>
+          <button className="btn-primary flex-[2]" disabled={!props.primaryEnabled} onClick={props.onPrimary}>
+            {props.primaryLabel ?? t.play}
           </button>
         </div>
       </section>

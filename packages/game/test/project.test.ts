@@ -31,6 +31,7 @@ describe('project (GameState -> public rows + private cards)', () => {
     expect(p.hand!.phase).toBe('pegging');
     expect(p.hand!.starter).not.toBeNull();
     expect(p.hand!.turn_seat).toBe(1); // dealer's left leads
+    expect(p.hand!.cards_left).toEqual([4, 4]); // both kept 4 after discarding
     const kept = p.privateCards.filter((r) => !r.shared);
     expect(kept.every((r) => r.kind === 'kept' && r.cards.length === 4)).toBe(true);
     expect(p.privateCards.find((r) => r.shared)?.cards).toHaveLength(4); // full crib

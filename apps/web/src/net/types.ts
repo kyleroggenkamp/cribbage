@@ -16,6 +16,8 @@ export interface GameRow {
   status: GameStatus;
   host_player_id: string;
   dealer_seat: number | null;
+  scores: number[];
+  winner_unit: number | null;
   created_at: string;
 }
 
@@ -38,10 +40,12 @@ export interface HandRow {
   game_id: string;
   hand_number: number;
   dealer_seat: number;
-  phase: string;
+  phase: 'discarding' | 'pegging' | 'show' | 'done' | string;
   starter: string | null;
   turn_seat: number | null;
   running_count: number;
+  series: string[];
+  cards_left: number[];
 }
 
 export interface GameState {

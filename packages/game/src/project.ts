@@ -27,6 +27,8 @@ export interface PublicHand {
   turn_seat: number | null;
   running_count: number;
   series: string[];
+  /** Cards still in each seat's hand (public count, not the cards). */
+  cards_left: number[];
 }
 
 /** A card row for one seat (the Edge Function fills player_id from the seats map). */
@@ -59,6 +61,10 @@ export function project(game: GameState): ProjectedState {
   }
 
   const h = game.hand;
+  const cardsLeft = Array.from({ length: game.config.playerCount }, (_, seat) => {
+    if (h.pegging) return h.pegging.hands[seat]!.length;
+    return h.kept[seat]?.length ?? h.dealt[seat]!.length;
+  });
   const hand: PublicHand = {
     hand_number: h.handNumber,
     dealer_seat: h.dealerSeat,
@@ -67,6 +73,7 @@ export function project(game: GameState): ProjectedState {
     turn_seat: h.pegging && !h.pegging.done ? h.pegging.turn : null,
     running_count: h.pegging ? h.pegging.count : 0,
     series: h.pegging ? ids(h.pegging.series) : [],
+    cards_left: cardsLeft,
   };
 
   const privateCards: PrivateCardRow[] = [];

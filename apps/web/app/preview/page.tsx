@@ -28,14 +28,14 @@ export default function Preview() {
           opponents={[{ name: 'Taylor', cardCount: 3, isTurn: false, isDealer: true, color: 'var(--peg-b)' }]}
           starter={C('5', 'H')}
           cribCount={4}
-          cribIsDealers="Taylor's crib"
+          cribLabel="Taylor's crib"
           series={[C('6', 'C'), C('4', 'D'), C('5', 'S')]}
           count={15}
           lastEvent="Taylor: run of 3 for 3"
           statusLine="Your turn. Count is 15."
           myHand={[C('4', 'D'), C('5', 'S'), C('6', 'C'), C('J', 'H')]}
-          selectedIndex={3}
-          canPlay
+          selectedIndices={[3]}
+          primaryEnabled
         />
       </Section>
 
