@@ -101,14 +101,32 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Persist the blob, then project the public-safe state.
   await svc.from('engine_state').upsert({ game_id: gameId, state, updated_at: new Date().toISOString() });
   const p = project(state);
-  await svc.from('games').update({
-    status: p.game.status,
-    dealer_seat: p.game.dealer_seat,
-    scores: p.game.scores,
-    winner_unit: p.game.winner_unit,
-  }).eq('id', gameId);
 
+  // WRITE ORDER MATTERS. Clients subscribe to realtime changes on games/hands
+  // (NOT private_cards — RLS would still gate it, and the fewer channels the
+  // better on weak cell signal), and on every change they refetch the FULL
+  // snapshot via get_game_state. So any games/hands write fires a client
+  // refetch. If we wrote games/hands BEFORE rewriting private_cards, that
+  // refetch would read private_cards mid-delete (empty) and, because the
+  // private_cards insert fires no event, nothing would ever correct it — the
+  // player is left with an empty hand and the game locks up.
+  //
+  // Therefore: rewrite private_cards FIRST, then hands, then games LAST. The
+  // games update happens on every action and always fires a wake, so the final
+  // client refetch is guaranteed to run after every write has committed.
   if (p.hand) {
+    const seatPlayer = new Map((seats ?? []).map((s) => [s.seat_index, s.player_id]));
+    await svc.from('private_cards').delete().eq('game_id', gameId).eq('hand_number', p.hand.hand_number);
+    await svc.from('private_cards').insert(
+      p.privateCards.map((r) => ({
+        game_id: gameId,
+        hand_number: p.hand!.hand_number,
+        seat_index: r.seat_index,
+        player_id: r.shared ? null : seatPlayer.get(r.seat_index) ?? null,
+        kind: r.kind,
+        cards: r.cards,
+      })),
+    );
     await svc.from('hands').upsert({
       game_id: gameId,
       hand_number: p.hand.hand_number,
@@ -120,19 +138,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       series: p.hand.series,
       cards_left: p.hand.cards_left,
     });
-    await svc.from('private_cards').delete().eq('game_id', gameId).eq('hand_number', p.hand.hand_number);
-    const seatPlayer = new Map((seats ?? []).map((s) => [s.seat_index, s.player_id]));
-    await svc.from('private_cards').insert(
-      p.privateCards.map((r) => ({
-        game_id: gameId,
-        hand_number: p.hand!.hand_number,
-        seat_index: r.seat_index,
-        player_id: r.shared ? null : seatPlayer.get(r.seat_index) ?? null,
-        kind: r.kind,
-        cards: r.cards,
-      })),
-    );
   }
+
+  await svc.from('games').update({
+    status: p.game.status,
+    dealer_seat: p.game.dealer_seat,
+    scores: p.game.scores,
+    winner_unit: p.game.winner_unit,
+  }).eq('id', gameId);
 
   return json(200, { ok: true });
 });
