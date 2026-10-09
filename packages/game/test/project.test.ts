@@ -37,6 +37,27 @@ describe('project (GameState -> public rows + private cards)', () => {
     expect(p.privateCards.find((r) => r.shared)?.cards).toHaveLength(4); // full crib
   });
 
+  it('during the play, a seat sees only its UNPLAYED cards (shrinks as it pegs)', () => {
+    const g = newGame(TWO, 0);
+    reduce(g, { id: 'd1', type: 'deal', deck: makeDeck() });
+    reduce(g, { id: 'x0', type: 'discard', seat: 0, cards: g.hand!.dealt[0]!.slice(0, 2) });
+    reduce(g, { id: 'x1', type: 'discard', seat: 1, cards: g.hand!.dealt[1]!.slice(0, 2) });
+
+    const leader = g.hand!.pegging!.turn; // dealer's left leads
+    const card = g.hand!.pegging!.hands[leader]![0]!;
+    reduce(g, { id: 'p0', type: 'play', seat: leader, card });
+
+    const p = project(g);
+    expect(p.hand!.phase).toBe('pegging');
+    // The seat that played now holds 3; the other still holds 4.
+    const mine = p.privateCards.find((r) => !r.shared && r.seat_index === leader)!;
+    expect(mine.cards).toHaveLength(3);
+    // The played card is gone from the hand (it lives in the series now).
+    const playedId = p.hand!.series.at(-1)!;
+    expect(mine.cards).not.toContain(playedId);
+    expect(p.hand!.cards_left[leader]).toBe(3);
+  });
+
   it('exposes per-unit scores and no hand when none dealt', () => {
     const g = newGame(TWO, 0);
     g.scores = [10, 7];

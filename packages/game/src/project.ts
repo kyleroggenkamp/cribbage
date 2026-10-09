@@ -78,6 +78,14 @@ export function project(game: GameState): ProjectedState {
 
   const privateCards: PrivateCardRow[] = [];
   for (let seat = 0; seat < game.config.playerCount; seat++) {
+    if (h.phase === 'pegging' && h.pegging) {
+      // During the play a player holds only the cards NOT yet played: this
+      // shrinks as they peg, so the table removes each card as it is laid down.
+      // (At the show, phase is 'show'/'done' and we fall through to the full
+      // 4 kept cards below, which the count screen needs.)
+      privateCards.push({ seat_index: seat, kind: 'kept', cards: ids(h.pegging.hands[seat]!), shared: false });
+      continue;
+    }
     const kept = h.kept[seat];
     // Before discarding, a player sees their full dealt hand; after, the 4 kept.
     if (kept) privateCards.push({ seat_index: seat, kind: 'kept', cards: ids(kept), shared: false });
