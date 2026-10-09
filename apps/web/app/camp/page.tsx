@@ -52,15 +52,19 @@ export default function Lobby() {
   }
 
   // The host deals the first hand once the game starts (subsequent hands deal
-  // automatically after each show). Fires once.
-  const dealtRef = useRef(false);
+  // automatically after each show). This self-heals: as long as the game is
+  // playing with no hand yet, the host keeps re-sending `deal` every few
+  // seconds until a hand appears. A deal is a safe no-op once the hand exists
+  // (the server only initialises the first time), so a lost or cold-started
+  // first send can no longer wedge the table at "Dealing…".
   useEffect(() => {
     if (!state || !gameId || !myId) return;
     const amHost = state.game.host_player_id === myId;
-    if (state.game.status === 'playing' && !state.hand && amHost && !dealtRef.current) {
-      dealtRef.current = true;
-      send({ type: 'deal' });
-    }
+    const needsDeal = state.game.status === 'playing' && !state.hand && amHost;
+    if (!needsDeal) return;
+    send({ type: 'deal' });
+    const timer = setInterval(() => send({ type: 'deal' }), 4000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, gameId, myId]);
 

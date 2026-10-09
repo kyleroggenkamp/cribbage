@@ -43,9 +43,18 @@ async function supabaseTransport(action: QueuedAction): Promise<void> {
   });
   if (error) {
     const e: TransportError = error;
-    // A non-2xx from the function means the server rejected the move: don't
-    // retry forever. A fetch/network error is transient: keep retrying.
-    e.permanent = error instanceof FunctionsHttpError;
+    // Only a 4xx is a real rejection the client must stop retrying (illegal /
+    // out-of-turn move, not seated, …). A 5xx is a SERVER blip — a cold start
+    // right after a deploy, an overloaded instance — which is transient and
+    // must be retried, else a single cold-start 5xx silently wedges the game
+    // (e.g. the host's one deal gets dropped and the table never appears). A
+    // fetch/network error (not a FunctionsHttpError) is also transient.
+    if (error instanceof FunctionsHttpError) {
+      const status = (error as unknown as { context?: { status?: number } }).context?.status ?? 0;
+      e.permanent = status >= 400 && status < 500;
+    } else {
+      e.permanent = false;
+    }
     throw e;
   }
 }
