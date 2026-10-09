@@ -15,6 +15,7 @@ import { useGameState, type ConnStatus } from '@/net/useGameState';
 import { createWebActionQueue } from '@/net/actionQueueWeb';
 import type { ActionQueue } from '@/net/actionQueue';
 import { toTableView } from '@/net/gameView';
+import { errorMessage } from '@/net/errors';
 import { LiveGame } from '@/ui/LiveGame';
 import type { EngineCard } from '@/ui/Card';
 import { storage, KEYS } from '@/device/storage';
@@ -89,7 +90,7 @@ export default function Lobby() {
         const res = await joinCamp(c.toUpperCase(), name, storage.get(KEYS.standName));
         setGameId(res.game_id);
       } catch (e) {
-        setFatal(e instanceof Error ? e.message : String(e));
+        setFatal(errorMessage(e));
       }
     })();
   }, [router]);

@@ -63,6 +63,25 @@ describe('join_camp (REQUIREMENTS §2)', () => {
     expect(again!.seat_index).toBe(first!.seat_index);
   });
 
+  it('lets a seated player rejoin after the game has started (reconnect §6)', async () => {
+    const [camp] = await createCamp(UID.A);
+    const code = camp!.camp_code as string;
+    const gameId = camp!.game_id as string;
+    await db.asUser(UID.B, `select * from join_camp('${code}', 'Dave', null)`); // fill seat 1
+    await db.asUser(UID.A, `select start_game('${gameId}')`); // status -> playing
+
+    // Both seated players must still be able to rejoin (e.g. refresh the tab).
+    const [hostAgain] = await db.asUser(UID.A, `select * from join_camp('${code}', 'Host', 'Ridge stand')`);
+    const [daveAgain] = await db.asUser(UID.B, `select * from join_camp('${code}', 'Dave', null)`);
+    expect(hostAgain!.seat_index).toBe(0);
+    expect(daveAgain!.seat_index).toBe(1);
+
+    // But a NEW player still cannot join a game in progress.
+    await expect(
+      db.asUser(UID.C, `select * from join_camp('${code}', 'Mike', null)`),
+    ).rejects.toThrow(/already started/);
+  });
+
   it('rejects a full camp and an unknown code', async () => {
     const [camp] = await createCamp(UID.A); // 2-player
     const code = camp!.camp_code as string;

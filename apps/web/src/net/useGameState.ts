@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import { getGameState } from './rpc';
+import { errorMessage } from './errors';
 import type { GameState } from './types';
 
 export type ConnStatus = 'connecting' | 'connected' | 'weak' | 'offline';
@@ -27,7 +28,7 @@ export function useGameState(gameId: string | null) {
         setError(null);
       }
     } catch (e) {
-      if (mounted.current) setError(e instanceof Error ? e.message : String(e));
+      if (mounted.current) setError(errorMessage(e));
     }
   }, [gameId]);
 
